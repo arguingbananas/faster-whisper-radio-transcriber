@@ -1,0 +1,7 @@
+faster-whisper
+torch
+requests
+pydub
+numpy
+soundfile
+m3u8
