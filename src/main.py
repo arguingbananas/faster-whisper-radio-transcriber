@@ -21,7 +21,11 @@ def main():
     setup_logging()
 
     if len(sys.argv) < 2:
-        print("Usage: python main.py <stream_url>")
+        print("Usage: python main.py <input>")
+        print("  <input> can be one of the following:")
+        print("    - HLS stream URL (e.g., https://example.com/stream.m3u8)")
+        print("    - Direct MP3 stream URL (e.g., https://example.com/live.mp3)")
+        print("    - Path to a local MP3 file (e.g., myfile.mp3)")
         sys.exit(1)
 
     stream_url = sys.argv[1]
