@@ -1,6 +1,8 @@
 # Faster Whisper Radio Transcriber
 
-This project is designed to transcribe audio input from internet talk radio using the Faster Whisper transcription model. It captures audio from a specified radio stream and processes it for transcription.
+This project transcribes audio from **internet radio streams (HLS/m3u8)** or **local/direct MP3 files/streams** using the Faster Whisper transcription model. It supports real-time streaming, chunked transcription, and can automatically detect the input type (HLS or MP3) without any flags.
+
+---
 
 ## Project Structure
 
@@ -8,40 +10,84 @@ This project is designed to transcribe audio input from internet talk radio usin
 faster-whisper-radio-transcriber
 ├── src
 │   ├── main.py          # Entry point of the application
-│   ├── transcriber.py   # Contains the Transcriber class for audio transcription
-│   ├── radio_stream.py   # Contains the RadioStream class for fetching audio streams
+│   ├── transcriber.py   # Transcriber class for audio transcription (with chunk overlap support)
+│   ├── radio_stream.py  # RadioStream class for fetching HLS streams, MP3 streams, or local MP3 files
 │   └── utils.py         # Utility functions for logging and audio handling
-├── requirements.txt     # Lists the project dependencies
+├── requirements.txt     # Project dependencies
 └── README.md            # Project documentation
 ```
 
-## Installation
+---
 
-To set up the project, clone the repository and install the required dependencies:
+## Requirements
+
+- Python 3.8+
+- [ffmpeg](https://ffmpeg.org/) (must be installed and in your PATH for audio decoding)
+- See `requirements.txt` for Python dependencies:
+  - faster-whisper
+  - torch
+  - requests
+  - pydub
+  - numpy
+  - soundfile
+  - m3u8
+
+Install dependencies with:
 
 ```bash
-git clone <repository-url>
-cd faster-whisper-radio-transcriber
 pip install -r requirements.txt
 ```
 
-## Usage
-
-To start the transcription process, run the main application:
+Install ffmpeg (Linux example):
 
 ```bash
-python src/main.py
+sudo apt-get install ffmpeg
 ```
 
-## Functionality
+---
 
-- **Transcriber Class**: Handles the loading of the Faster Whisper model and transcribes audio input.
-- **RadioStream Class**: Fetches audio from an internet talk radio source and provides audio data for transcription.
-- **Utility Functions**: Includes functions for logging setup and downloading audio segments if necessary.
+## Usage
+
+To start the transcription process, run:
+
+```bash
+python src/main.py <input>
+```
+
+Where `<input>` can be:
+- An HLS stream URL (ending with `.m3u8` or containing `m3u8`)
+- A direct MP3 stream URL
+- A path to a local MP3 file
+
+**Examples:**
+
+```bash
+python src/main.py https://ample-a.revma.ihrhls.com/zc7729/72_1u78k3rrpowz902/playlist.m3u8?streamid=7729
+python src/main.py https://somesite.com/live.mp3
+python src/main.py myfile.mp3
+```
+
+The program will automatically detect the input type and process accordingly.
+
+---
+
+## Features
+
+- **Automatic Input Detection:** No flags needed—just provide the URL or file path.
+- **Supports HLS (m3u8) and MP3:** Handles both streaming and local files.
+- **Real-time Streaming:** Buffers and transcribes audio in parallel for low latency.
+- **Chunk Overlap (optional):** Improves transcription accuracy at chunk boundaries.
+- **Audio Normalization:** Light normalization for improved transcription quality.
+- **Threaded Transcription:** Uses a queue and worker thread for efficient processing.
+- **Logging:** Logs transcription activity to `transcriber.log`.
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a pull request or open an issue for any enhancements or bug fixes.
+Contributions are welcome! Please submit a pull request or open an issue for enhancements or bug fixes.
+
+---
 
 ## License
 
