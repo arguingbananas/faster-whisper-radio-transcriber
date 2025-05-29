@@ -5,6 +5,7 @@ import m3u8
 import time
 from urllib.parse import urljoin
 from pydub import AudioSegment
+import os
 
 class RadioStream:
     def __init__(self, stream_url):
@@ -14,8 +15,20 @@ class RadioStream:
         self.streaming = False
         self.thread = None
         self.seen_segments = set()
+        self.is_file = os.path.isfile(stream_url)
+        self.is_hls = (".m3u8" in stream_url or "m3u8" in stream_url) and not self.is_file
 
     def fetch_stream(self, poll_interval=2):
+        if self.is_file:
+            with open(self.stream_url, "rb") as f:
+                with self.buffer_lock:
+                    self.audio_buffer.write(f.read())
+        elif self.is_hls:
+            self._fetch_hls_stream(poll_interval)
+        else:
+            self._fetch_mp3_stream()
+
+    def _fetch_hls_stream(self, poll_interval=2):
         def stream_worker():
             while self.streaming:
                 try:
@@ -52,12 +65,27 @@ class RadioStream:
         """
         Returns the audio buffer as WAV bytes, suitable for Whisper.
         """
-        mpegts_data = self.get_audio()
-        if not mpegts_data:
+        raw_data = self.get_audio()
+        if not raw_data:
             return None
-        
-        # Decode MPEG-TS to AudioSegment
-        audio = AudioSegment.from_file(BytesIO(mpegts_data), format="aac")
+
+        # Choose format based on input type
+        if self.is_file:
+            # Assume local file is mp3
+            audio = AudioSegment.from_file(BytesIO(raw_data), format="mp3")
+        elif self.is_hls:
+            # Try AAC first, then fallback to mp3 or mpegts if needed
+            try:
+                audio = AudioSegment.from_file(BytesIO(raw_data), format="aac")
+            except Exception:
+                try:
+                    audio = AudioSegment.from_file(BytesIO(raw_data), format="mp3")
+                except Exception:
+                    audio = AudioSegment.from_file(BytesIO(raw_data), format="mpegts")
+        else:
+            # Assume direct mp3 stream
+            audio = AudioSegment.from_file(BytesIO(raw_data), format="mp3")
+
         wav_buffer = BytesIO()
         audio.export(wav_buffer, format="wav")
         wav_buffer.seek(0)
