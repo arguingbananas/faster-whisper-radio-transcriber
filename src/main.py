@@ -5,6 +5,8 @@ from utils import setup_logging
 import time
 import threading
 from queue import Queue, Empty
+import requests
+import json
 
 def transcription_worker(audio_queue, transcriber, stop_event, output_file=None):
     while not stop_event.is_set():
@@ -16,9 +18,35 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None)
                 if output_file:
                     with open(output_file, "a", encoding="utf-8") as f:
                         f.write(transcription + "\n")
+                # Send to Ollama and print extracted questions
+                questions = extract_questions_with_ollama(transcription)
+                if questions:
+                    print("Questions found by Ollama:")
+                    print(questions)
             audio_queue.task_done()
         except Empty:
             continue
+
+def extract_questions_with_ollama(transcription, ollama_url="http://localhost:11434/api/generate", model="deepseek-r1"):
+    prompt = (
+        "Extract all questions from the following text. "
+        "Return only the questions, one per line.\n\n"
+        f"Text:\n{transcription}"
+    )
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "think": false,
+        "stream": False
+    }
+    try:
+        response = requests.post(ollama_url, json=payload, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+        return result.get("response", "").strip()
+    except Exception as e:
+        print(f"Error communicating with Ollama: {e}")
+        return ""
 
 def main():
     setup_logging()
