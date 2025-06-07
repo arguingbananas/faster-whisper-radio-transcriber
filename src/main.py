@@ -16,7 +16,8 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None)
                 transcription = transcriber.transcribe_audio(audio_wav)
                 print(transcription)
                 if output_file:
-                    with open(output_file, "a", encoding="utf-8") as f:
+                    # Overwrite the file with the latest transcription
+                    with open(output_file, "w", encoding="utf-8") as f:
                         f.write(transcription + "\n")
                 # Send to Ollama and print extracted questions
                 questions = extract_questions_with_ollama(transcription)
@@ -30,13 +31,13 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None)
 def extract_questions_with_ollama(transcription, ollama_url="http://localhost:11434/api/generate", model="deepseek-r1"):
     prompt = (
         "Extract all questions from the following text. "
-        "Return only the questions, one per line.\n\n"
+        "Return only the questions and the corresponding answer, one per line. Make the responses as concise as possible.\n\n"
         f"Text:\n{transcription}"
     )
     payload = {
         "model": model,
         "prompt": prompt,
-        "think": false,
+        "think": False,
         "stream": False
     }
     try:
