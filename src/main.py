@@ -28,10 +28,10 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None)
         except Empty:
             continue
 
-def extract_questions_with_ollama(transcription, ollama_url="http://localhost:11434/api/generate", model="deepseek-r1"):
+def extract_questions_with_ollama(transcription, ollama_url="http://localhost:11434/api/generate", model="qwen3"):
     prompt = (
-        "Extract all questions from the following text. "
-        "Return only the questions and the corresponding answer, one per line. Make the responses as concise as possible.\n\n"
+        "Extract all trivia questions from the following text and answer them yourself. Ignore answers given in the text. "
+        "Give concise responses. Proceed every question and answer with Q: and A: respectively.\n\n"
         f"Text:\n{transcription}"
     )
     payload = {
