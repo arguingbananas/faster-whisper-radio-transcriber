@@ -14,7 +14,7 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None)
             audio_wav = audio_queue.get(timeout=1)
             if audio_wav:
                 transcription = transcriber.transcribe_audio(audio_wav)
-                print(transcription)
+                print("Transcription: ", transcription)
                 if output_file:
                     # Overwrite the file with the latest transcription
                     with open(output_file, "w", encoding="utf-8") as f:
