@@ -5,3 +5,4 @@ pydub
 numpy
 soundfile
 m3u8
+sounddevice

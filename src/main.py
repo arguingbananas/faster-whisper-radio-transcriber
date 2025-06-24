@@ -1,6 +1,7 @@
 import sys
 from transcriber import Transcriber
 from radio_stream import RadioStream
+from linein_stream import LineInStream
 from utils import setup_logging
 import time
 import threading
@@ -58,12 +59,18 @@ def main():
         print("    - HLS stream URL (e.g., https://example.com/stream.m3u8)")
         print("    - Direct MP3 stream URL (e.g., https://example.com/live.mp3)")
         print("    - Path to a local MP3 file (e.g., myfile.mp3)")
+        print("    - linein (use system audio input)")
         print("  [output_file] (optional): Path to save transcriptions")
         sys.exit(1)
 
     stream_url = sys.argv[1]
     output_file = sys.argv[2] if len(sys.argv) > 2 else None
-    radio_stream = RadioStream(stream_url)
+
+    if stream_url == "linein":
+        radio_stream = LineInStream()
+    else:
+        radio_stream = RadioStream(stream_url)
+
     transcriber = Transcriber(model_name="base.en", chunk_overlap_sec=0)
 
     # Initialize the audio queue and worker thread for transcription
