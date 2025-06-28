@@ -9,20 +9,21 @@ from queue import Queue, Empty
 import requests
 import json
 
-def transcription_worker(audio_queue, transcriber, stop_event, output_file=None):
+def transcription_worker(audio_queue, transcriber, stop_event, output_file=None, show_transcript=True, show_questions=True):
     while not stop_event.is_set():
         try:
             audio_wav = audio_queue.get(timeout=1)
             if audio_wav:
                 transcription = transcriber.transcribe_audio(audio_wav)
-                print("Transcription: ", transcription)
+                if show_transcript:
+                    print("Transcription: ", transcription)
                 if output_file:
                     # Overwrite the file with the latest transcription
                     with open(output_file, "w", encoding="utf-8") as f:
                         f.write(transcription + "\n")
                 # Send to Ollama and print extracted questions
                 questions = extract_questions_with_ollama(transcription)
-                if questions:
+                if questions and show_questions:
                     print("Questions found by Ollama:")
                     print(questions)
             audio_queue.task_done()
@@ -54,17 +55,30 @@ def main():
     setup_logging()
 
     if len(sys.argv) < 2:
-        print("Usage: python main.py <input> [output_file]")
+        print("Usage: python main.py <input> [output_file] [--no-transcript] [--no-questions]")
         print("  <input> can be one of the following:")
         print("    - HLS stream URL (e.g., https://example.com/stream.m3u8)")
         print("    - Direct MP3 stream URL (e.g., https://example.com/live.mp3)")
         print("    - Path to a local MP3 file (e.g., myfile.mp3)")
         print("    - linein (use system audio input)")
         print("  [output_file] (optional): Path to save transcriptions")
+        print("  --no-transcript (optional): Do not print transcriptions to screen")
+        print("  --no-questions (optional): Do not print extracted questions to screen")
         sys.exit(1)
 
     stream_url = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
+    output_file = None
+    show_transcript = True
+    show_questions = True
+
+    # Parse optional arguments
+    for arg in sys.argv[2:]:
+        if arg == "--no-transcript":
+            show_transcript = False
+        elif arg == "--no-questions":
+            show_questions = False
+        else:
+            output_file = arg
 
     if stream_url == "linein":
         radio_stream = LineInStream()
@@ -78,7 +92,7 @@ def main():
     stop_event = threading.Event()
     worker_thread = threading.Thread(
         target=transcription_worker,
-        args=(audio_queue, transcriber, stop_event, output_file),
+        args=(audio_queue, transcriber, stop_event, output_file, show_transcript, show_questions),
         daemon=True
     )
 
@@ -87,15 +101,17 @@ def main():
 
     try:
         while True:
-            time.sleep(10)  # Buffer for (n) seconds
+            time.sleep(16)  # Buffer for (n) seconds
             audio_wav = radio_stream.get_audio_wav()
             if audio_wav:
                 try:
                     audio_queue.put(audio_wav, timeout=2)
                 except:
-                    print("Transcription queue is full, dropping audio chunk.")
+                    if show_transcript or show_questions:
+                        print("Transcription queue is full, dropping audio chunk.")
             else:
-                print("No audio buffered yet.")
+                if show_transcript or show_questions:
+                    print("No audio buffered yet.")
     except KeyboardInterrupt:
         radio_stream.stop_stream()
         stop_event.set()
