@@ -16,7 +16,7 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None,
             if audio_wav:
                 transcription = transcriber.transcribe_audio(audio_wav)
                 if show_transcript:
-                    print("Transcription: ", transcription)
+                    print("\nTranscription: ", transcription)
                 if output_file:
                     # Overwrite the file with the latest transcription
                     with open(output_file, "w", encoding="utf-8") as f:
@@ -24,7 +24,7 @@ def transcription_worker(audio_queue, transcriber, stop_event, output_file=None,
                 # Send to Ollama and print extracted questions
                 questions = extract_questions_with_ollama(transcription)
                 if questions and show_questions:
-                    print("Questions found by Ollama:")
+                    print("\nQuestions found by Ollama:")
                     print(questions)
             audio_queue.task_done()
         except Empty:
