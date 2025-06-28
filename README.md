@@ -8,16 +8,17 @@ This tool streams audio from various sources, transcribes it using Faster Whispe
   - HLS stream URL (e.g., `https://example.com/stream.m3u8`)
   - Direct MP3 stream URL (e.g., `https://example.com/live.mp3`)
   - Local MP3 file (e.g., `myfile.mp3`)
-  - System audio input ("linein" for microphone or line-in)
+  - System audio input (`linein` for microphone or line-in)
 - **Real-time transcription** using [Faster Whisper](https://github.com/SYSTRAN/faster-whisper)
 - **Optional output to file:** Save the latest transcription to a file (overwrites each time)
 - **Trivia question extraction** from transcription using a local [Ollama](https://ollama.com/) LLM instance
+- **Configurable console output**: Show only transcriptions, only questions, both, or neither
 - **Graceful shutdown** with Ctrl+C
 
 ## Usage
 
 ```bash
-python src/main.py <input> [output_file]
+python src/main.py <input> [output_file] [--no-transcript] [--no-questions]
 ```
 
 - `<input>`:  
@@ -27,13 +28,17 @@ python src/main.py <input> [output_file]
   - `linein` (use system audio input)
 - `[output_file]` (optional):  
   - If provided, the latest transcription will be saved to this file (overwritten each time).
+- `--no-transcript` (optional):  
+  - Suppress printing transcriptions to the console.
+- `--no-questions` (optional):  
+  - Suppress printing extracted questions to the console.
 
 ### Example
 
 ```bash
 python src/main.py https://example.com/stream.m3u8
-python src/main.py myfile.mp3 transcript.txt
-python src/main.py linein
+python src/main.py myfile.mp3 transcript.txt --no-questions
+python src/main.py linein --no-transcript
 ```
 
 ## Requirements
@@ -62,9 +67,9 @@ pip install -r requirements.txt
 
 ## Output
 
-- Transcriptions are printed to the console as they are generated.
+- Transcriptions are printed to the console as they are generated (unless `--no-transcript` is used).
 - If `[output_file]` is specified, the latest transcription chunk overwrites the file.
-- Extracted questions (if any) are printed to the console.
+- Extracted questions (if any) are printed to the console (unless `--no-questions` is used).
 
 ## License
 
